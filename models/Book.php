@@ -69,6 +69,11 @@ class Book extends \yii\db\ActiveRecord
         return $this->hasMany(BookAuthors::class, ['id_book' => 'id']);
     }
 
+    public function getAuthors()
+    {
+        return $this->hasMany(Author::class, ['id' => 'id_author'])->via('bookAuthors');
+    }
+
     public function beforeSave($insert)
     {
         $this->photo = 'uploads/' . $this->id;

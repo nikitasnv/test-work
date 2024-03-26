@@ -2,11 +2,13 @@
 
 namespace app\controllers;
 
+use app\models\Book;
 use app\models\ContactForm;
 use app\models\LoginForm;
-use app\models\YearSearch;
 use Yii;
 use yii\data\ArrayDataProvider;
+use yii\db\Expression;
+use yii\db\Query;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\web\Controller;
@@ -66,23 +68,20 @@ class SiteController extends Controller
         $created = Yii::$app->request->get('created');
         $topList = [];
         if (!empty($created)) {
-            $topList = Yii::$app->db->createCommand(
-                <<<SQL
-select main.*, a.name
-from (
-         select a.id, b.created, count(*) count
-         from book b
-                  left join book_authors ba on b.id = ba.id_book
-                  left join author a on a.id = ba.id_author
-         where b.created = $created
-         group by b.created, a.id
-         order by count(*) DESC
-         limit 10
-     ) main
-         left join author a on a.id = main.id
-SQL
-            )->queryAll();
+            $query = new Query();
+            $bookQuery = Book::find()
+                ->select(['a.id', 'b.created', 'count(*) as count'])
+                ->alias('b')
+                ->joinWith(['authors a'])
+                ->where(['created' => $created])
+                ->groupBy(['b.created', 'a.id'])
+                ->orderBy(new Expression('count(*) DESC'))
+                ->limit(10);
+            $topList = $query->from(['main' => $bookQuery])
+                ->select(['main.*', 'a.name'])
+                ->leftJoin(['a' => 'author'], 'a.id = main.id')->all();
         }
+
 
         $topList = new ArrayDataProvider([
             'key' => 'id',
