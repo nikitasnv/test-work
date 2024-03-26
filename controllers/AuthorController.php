@@ -136,14 +136,14 @@ class AuthorController extends Controller
     public function actionSubscribe($id, $phone)
     {
         $author = Author::findOne($id);
+        $phone = preg_replace('/[^0-9]/', '', $phone);
         if (!empty($author)) {
-            $phone = preg_replace('/[^0-9]/', '', $phone);
             if (Subscribers::find()->where(['id_author' => $author->id, 'phone' => $phone])->exists()) {
                 return;
             }
             $model = new Subscribers();
             $model->id_author = $author->id;
-            $model->phone = preg_replace('/[^0-9]/', '', $phone);
+            $model->phone = $phone;
             $model->save();
         }
     }
